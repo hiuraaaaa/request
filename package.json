@@ -1,0 +1,19 @@
+{
+  "name": "request-scrape-form",
+  "version": "1.0.0",
+  "description": "Form request scraping dan fitur dengan integrasi Telegram bot",
+  "main": "api/send-telegram.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "form",
+    "scraping",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT"
+}
