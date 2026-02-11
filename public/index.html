@@ -367,6 +367,9 @@
             submitBtn.innerHTML = '<span class="loader"></span> Mengirim...';
 
             try {
+                console.log('Sending to:', '/api/send-telegram');
+                console.log('Data:', formData);
+
                 const response = await fetch('/api/send-telegram', {
                     method: 'POST',
                     headers: {
@@ -375,8 +378,22 @@
                     body: JSON.stringify(formData)
                 });
 
-                // Parse JSON response
-                const result = await response.json();
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                // Get response as text first to see what we're getting
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+
+                // Try to parse as JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    showMessage('❌ Server error: ' + responseText.substring(0, 100), 'error');
+                    return;
+                }
 
                 if (response.ok && result.success) {
                     showMessage('✅ Request berhasil dikirim! Pesan sudah masuk ke Telegram Anda.', 'success');
