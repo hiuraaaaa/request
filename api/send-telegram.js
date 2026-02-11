@@ -157,15 +157,28 @@ export default async function handler(req, res) {
 
     // Format pesan untuk Telegram
     const message = `
-🆕 "Request Baru!"
+🆕 REQUEST BARU MASUK
 
-📧 "Email": ${email}
-🔗 "URL": ${url}
-📝 "Deskripsi":
-${description}
+📋 Detail Request
+─────────────────────────
 
-🕐 "Waktu": ${timestamp}
-🌐 "IP": ${clientIP}
+📧 Email
+└─ ${email}
+
+🔗 URL Target
+└─ ${url}
+
+📝 Deskripsi
+└─ ${description}
+
+🕐 Waktu Submit
+└─ ${timestamp}
+
+🌐 IP Address
+└─ ${clientIP}
+
+─────────────────────────
+#RequestForm #NewSubmission
     `.trim();
 
     // Kirim ke Telegram
