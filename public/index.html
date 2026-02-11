@@ -160,12 +160,12 @@
             margin-top: 10px;
         }
 
-        .submit-btn:hover {
+        .submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .submit-btn:active {
+        .submit-btn:active:not(:disabled) {
             transform: translateY(0);
         }
 
@@ -181,6 +181,7 @@
             margin-bottom: 20px;
             font-size: 14px;
             display: none;
+            line-height: 1.5;
         }
 
         .message.success {
@@ -347,7 +348,7 @@
 
             // Validate captcha
             if (parseInt(captchaInput.value) !== captchaAnswer) {
-                showMessage('Jawaban captcha salah! Silakan coba lagi.', 'error');
+                showMessage('❌ Jawaban captcha salah! Silakan coba lagi.', 'error');
                 generateCaptcha();
                 captchaInput.value = '';
                 return;
@@ -374,17 +375,28 @@
                     body: JSON.stringify(formData)
                 });
 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    const text = await response.text();
+                    console.error('Response text:', text);
+                    throw new Error('Server mengirim response yang tidak valid. Periksa konfigurasi Vercel.');
+                }
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     showMessage('✅ Request berhasil dikirim! Kami akan segera menghubungi Anda.', 'success');
                     document.getElementById('requestForm').reset();
                     generateCaptcha();
                 } else {
-                    showMessage('❌ Gagal mengirim request: ' + (result.error || 'Unknown error'), 'error');
+                    const errorMsg = result.error || result.details || 'Unknown error';
+                    showMessage('❌ ' + errorMsg, 'error');
+                    console.error('API Error:', result);
                 }
             } catch (error) {
-                showMessage('❌ Terjadi kesalahan: ' + error.message, 'error');
+                console.error('Fetch error:', error);
+                showMessage('❌ Terjadi kesalahan: ' + error.message + ' - Periksa environment variables di Vercel.', 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Kirim Request';
@@ -398,7 +410,7 @@
             
             setTimeout(() => {
                 messageDiv.classList.remove('show');
-            }, 5000);
+            }, 8000);
         }
     </script>
 </body>
