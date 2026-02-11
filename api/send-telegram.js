@@ -36,31 +36,35 @@ async function handler(req, res) {
 
         if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
             console.error('Missing Telegram credentials');
-            console.error('BOT_TOKEN exists:', !!TELEGRAM_BOT_TOKEN);
-            console.error('CHAT_ID exists:', !!TELEGRAM_CHAT_ID);
             return res.status(500).json({ 
-                error: 'Server configuration error. Please check environment variables.' 
+                error: 'Server configuration error. Environment variables tidak ditemukan.' 
             });
         }
 
+        // Escape HTML entities for Telegram
+        const escapeHtml = (text) => {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        };
+
         // Format message with HTML
-        const message = `
-🔔 <b>REQUEST BARU - Scrape &amp; Fitur</b>
+        const message = `🔔 <b>REQUEST BARU - Scrape &amp; Fitur</b>
 
 👤 <b>Email:</b>
-<code>${email}</code>
+<code>${escapeHtml(email)}</code>
 
 🔗 <b>URL Target:</b>
-${url !== '-' ? `<code>${url}</code>` : '<i>Tidak ada</i>'}
+${url !== '-' ? `<code>${escapeHtml(url)}</code>` : '<i>Tidak ada</i>'}
 
 📝 <b>Deskripsi Request:</b>
-${description}
+${escapeHtml(description)}
 
 ⏰ <b>Waktu:</b>
 ${timestamp}
 
-━━━━━━━━━━━━━━━━━━━━
-`;
+━━━━━━━━━━━━━━━━━━━━`;
 
         // Send to Telegram
         const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -78,17 +82,6 @@ ${timestamp}
             })
         });
 
-        // Check if response is JSON
-        const contentType = telegramResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const textResponse = await telegramResponse.text();
-            console.error('Telegram API returned non-JSON response:', textResponse);
-            return res.status(500).json({ 
-                error: 'Telegram API error (non-JSON response)',
-                details: 'Please check your bot token and chat ID'
-            });
-        }
-
         const telegramData = await telegramResponse.json();
 
         if (!telegramData.ok) {
@@ -98,7 +91,7 @@ ${timestamp}
             let errorMessage = 'Gagal mengirim ke Telegram';
             if (telegramData.description) {
                 if (telegramData.description.includes('chat not found')) {
-                    errorMessage = 'Chat ID tidak valid. Pastikan Anda sudah /start bot atau bot sudah diinvite ke group.';
+                    errorMessage = 'Chat ID tidak valid. Pastikan bot sudah di-start dengan /start';
                 } else if (telegramData.description.includes('bot was blocked')) {
                     errorMessage = 'Bot diblokir. Silakan unblock bot di Telegram.';
                 } else if (telegramData.description.includes('Unauthorized')) {
@@ -117,7 +110,7 @@ ${timestamp}
         // Success response
         return res.status(200).json({ 
             success: true, 
-            message: 'Request berhasil dikirim ke Telegram' 
+            message: 'Request berhasil dikirim ke Telegram!' 
         });
 
     } catch (error) {
