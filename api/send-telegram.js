@@ -1,22 +1,16 @@
-// Enable CORS for all requests
-const allowCors = fn => async (req, res) => {
+export default async function handler(req, res) {
+    // Set CORS headers
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    );
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
     
+    // Handle OPTIONS request
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
     }
-    
-    return await fn(req, res);
-};
 
-async function handler(req, res) {
     // Only allow POST requests
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -35,21 +29,23 @@ async function handler(req, res) {
         const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
         if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-            console.error('Missing Telegram credentials');
+            console.error('Missing environment variables');
+            console.error('BOT_TOKEN exists:', !!TELEGRAM_BOT_TOKEN);
+            console.error('CHAT_ID exists:', !!TELEGRAM_CHAT_ID);
             return res.status(500).json({ 
-                error: 'Server configuration error. Environment variables tidak ditemukan.' 
+                error: 'Environment variables tidak ditemukan. Periksa TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Vercel Settings.' 
             });
         }
 
-        // Escape HTML entities for Telegram
+        // Escape HTML entities
         const escapeHtml = (text) => {
-            return text
+            return String(text)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
         };
 
-        // Format message with HTML
+        // Format message
         const message = `🔔 <b>REQUEST BARU - Scrape &amp; Fitur</b>
 
 👤 <b>Email:</b>
@@ -87,7 +83,6 @@ ${timestamp}
         if (!telegramData.ok) {
             console.error('Telegram API error:', telegramData);
             
-            // Provide helpful error messages
             let errorMessage = 'Gagal mengirim ke Telegram';
             if (telegramData.description) {
                 if (telegramData.description.includes('chat not found')) {
@@ -95,7 +90,7 @@ ${timestamp}
                 } else if (telegramData.description.includes('bot was blocked')) {
                     errorMessage = 'Bot diblokir. Silakan unblock bot di Telegram.';
                 } else if (telegramData.description.includes('Unauthorized')) {
-                    errorMessage = 'Bot token tidak valid. Periksa TELEGRAM_BOT_TOKEN.';
+                    errorMessage = 'Bot token tidak valid.';
                 } else {
                     errorMessage = telegramData.description;
                 }
@@ -107,7 +102,7 @@ ${timestamp}
             });
         }
 
-        // Success response
+        // Success
         return res.status(200).json({ 
             success: true, 
             message: 'Request berhasil dikirim ke Telegram!' 
@@ -116,10 +111,8 @@ ${timestamp}
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ 
-            error: 'Terjadi kesalahan saat mengirim request',
+            error: 'Terjadi kesalahan',
             details: error.message 
         });
     }
 }
-
-module.exports = allowCors(handler);
